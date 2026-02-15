@@ -1,0 +1,21 @@
+# Složky s výsledky překladu (binárky)
+[Bb]in/
+[Oo]bj/
+
+# Nastavení Visual Studia
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Soubory generované při migraci databáze
+*.db
+*.db-shm
+*.db-wal
+
+# Uživatelské nastavení a tajné klíče
+appsettings.Development.json
+secrets.json
+
+# Ostatní
+.DS_Store
