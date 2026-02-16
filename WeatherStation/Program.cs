@@ -1,15 +1,33 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using WeatherStation;
 
-var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddHostedService<Worker>();
-builder.Services.AddHttpClient();
-builder.Services.AddDbContext<AppDbContext>(options =>
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File("logs/weather_station.txt", rollingInterval: RollingInterval.Day, rollOnFileSizeLimit: true, retainedFileCountLimit: 90)
+    .CreateLogger();
+Log.Information("Starting...");
+try
+{
+    var builder = Host.CreateApplicationBuilder(args);
+    builder.Logging.AddSerilog();
+    builder.Services.AddHostedService<Worker>();
+    builder.Services.AddHttpClient();
+    builder.Services.AddDbContext<AppDbContext>(options =>
     {
         options.UseSqlServer(
             builder.Configuration.GetConnectionString("DefaultConnection"));
-});
-builder.Services.Configure<WeatherSettings>(builder.Configuration.GetSection("WeatherSettings"));
+    });
+    builder.Services.Configure<WeatherSettings>(builder.Configuration.GetSection("WeatherSettings"));
 
-var host = builder.Build();
-host.Run();
+    var host = builder.Build();
+    host.Run();
+}
+catch (Exception e)
+{
+    Log.Fatal(e, "Aplikace neo?ekávan? spadla!");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
+

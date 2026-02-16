@@ -6,9 +6,9 @@ Worker Service v .NET 8, která v pravidelných intervalech (1h) stahuje XML dat
 
 ## Nastroje
 
-- NET 8 SDK
-- Entity Framework Core (SQL Server)
-- LocalDB ((localdb)\mssqllocaldb)
+- .NET 8 SDK
+- Entity Framework Core
+- Serilog
 
 ## Jak spustit
 

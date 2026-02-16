@@ -43,7 +43,7 @@ namespace WeatherStation
 
                 try
                 {
-                    string? tmpXml = await client.GetStringAsync(weatherStationUrl);
+                    string? tmpXml = await client.GetStringAsync(weatherStationUrl, stoppingToken);
                     XDocument xmlDoc = XDocument.Parse(tmpXml);
 
                     var sensor = xmlDoc.Descendants("sensor")
@@ -56,15 +56,15 @@ namespace WeatherStation
                         }).ToList();
                     string jsonResult = JsonSerializer.Serialize(sensor);
 
-                    WeatherLog newLog = new WeatherLog();
+                    var okLog = new WeatherLog
+                    {
+                        Id = Guid.NewGuid(),
+                        IsAvailable = true,
+                        Data = jsonResult,
+                        UploadedAt = DateTimeOffset.Now
+                    };
 
-                    newLog.Id = Guid.NewGuid();
-                    newLog.IsAvailable = true;
-                    newLog.Data = jsonResult;
-                    newLog.UploadedAt = DateTimeOffset.Now;
-
-                    dbContext.WeatherLogs.Add(newLog);
-                    await dbContext.SaveChangesAsync();
+                    dbContext.WeatherLogs.Add(okLog);
 
                 }
                 catch (Exception e)
@@ -74,14 +74,20 @@ namespace WeatherStation
                         _logger.LogWarning(e, "Station offline at: {time}", DateTimeOffset.Now);
                     }
 
-                    WeatherLog newLog = new WeatherLog();
+                    var errLog = new WeatherLog
+                    {
+                        Id = Guid.NewGuid(),
+                        IsAvailable = false,
+                        ErrorMessage = e.Message,
+                        UploadedAt = DateTimeOffset.Now
+                    };
 
-                    newLog.Id = Guid.NewGuid();
-                    newLog.IsAvailable = false;
-                    newLog.ErrorMessage = e.Message;
-                    newLog.UploadedAt = DateTimeOffset.Now;
+                    dbContext.WeatherLogs.Add(errLog);
+                    
+                }
+                finally
+                {
 
-                    dbContext.WeatherLogs.Add(newLog);
                     await dbContext.SaveChangesAsync();
                 }
                 

@@ -1,6 +1,7 @@
 # Složky s výsledky překladu (binárky)
 [Bb]in/
 [Oo]bj/
+[Ll]ogs/
 
 # Nastavení Visual Studia
 .vs/
