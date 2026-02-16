@@ -5,7 +5,7 @@ using WeatherStation;
 Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/weather_station.txt", rollingInterval: RollingInterval.Day, rollOnFileSizeLimit: true, retainedFileCountLimit: 90)
     .CreateLogger();
-Log.Information("Starting...");
+Log.Information("Starting app...");
 try
 {
     var builder = Host.CreateApplicationBuilder(args);

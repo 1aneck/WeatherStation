@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
+using Serilog;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
@@ -30,6 +31,7 @@ namespace WeatherStation
         {   
             while (!stoppingToken.IsCancellationRequested)
             {
+                var time = DateTimeOffset.Now;
                 using var scope = _serviceScopeFactory.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -38,8 +40,14 @@ namespace WeatherStation
 
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                    _logger.LogInformation("Worker running at: {Time}", time);
                 }
+
+                var log = new WeatherLog
+                {
+                    Id = Guid.NewGuid(),
+                    UploadedAt = time
+                };
 
                 try
                 {
@@ -56,42 +64,27 @@ namespace WeatherStation
                         }).ToList();
                     string jsonResult = JsonSerializer.Serialize(sensor);
 
-                    var okLog = new WeatherLog
-                    {
-                        Id = Guid.NewGuid(),
-                        IsAvailable = true,
-                        Data = jsonResult,
-                        UploadedAt = DateTimeOffset.Now
-                    };
-
-                    dbContext.WeatherLogs.Add(okLog);
+                    log.IsAvailable = true;
+                    log.Data = jsonResult;
 
                 }
                 catch (Exception e)
                 {
                     if (_logger.IsEnabled(LogLevel.Information))
                     {
-                        _logger.LogWarning(e, "Station offline at: {time}", DateTimeOffset.Now);
+                        _logger.LogWarning(e,"Station offline at: {time}", time);
                     }
 
-                    var errLog = new WeatherLog
-                    {
-                        Id = Guid.NewGuid(),
-                        IsAvailable = false,
-                        ErrorMessage = e.Message,
-                        UploadedAt = DateTimeOffset.Now
-                    };
-
-                    dbContext.WeatherLogs.Add(errLog);
-                    
+                    log.IsAvailable = false;
+                    log.ErrorMessage = e.Message;
                 }
                 finally
                 {
-
+                    dbContext.WeatherLogs.Add(log);
                     await dbContext.SaveChangesAsync();
                 }
                 
-                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+                await Task.Delay(_options.Value.Pause, stoppingToken);
             }
         }
     }

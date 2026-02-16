@@ -13,5 +13,11 @@ namespace WeatherStation
             get;
             set;
         } = string.Empty;
+
+        public TimeSpan Pause
+        {
+            get;
+            set;
+        }
     }
 }
