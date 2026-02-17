@@ -53,16 +53,45 @@ namespace WeatherStation
                 {
                     string? tmpXml = await client.GetStringAsync(weatherStationUrl, stoppingToken);
                     XDocument xmlDoc = XDocument.Parse(tmpXml);
+                    XElement? root = xmlDoc.Root;
 
-                    var sensor = xmlDoc.Descendants("sensor")
-                        .Select(s => new SensorModel
-                        {
-                            Id = s.Element("id")?.Value,
-                            Type = s.Element("type")?.Value,
-                            Name = s.Element("name")?.Value,
-                            Value = s.Element("value")?.Value
-                        }).ToList();
-                    string jsonResult = JsonSerializer.Serialize(sensor);
+                    var stationInfo = new
+                    {
+                        SerialNumber = root?.Attribute("serial_number")?.Value,
+                        Model = root?.Attribute("model")?.Value,
+                        Firmware = root?.Attribute("firmware")?.Value,
+                        Uptime = root?.Attribute("runtime")?.Value,
+                        StationTime = $"{root?.Attribute("date")?.Value} {root?.Attribute("time")?.Value}"
+                    };
+
+                    var sensors = xmlDoc.Descendants("sensor").Select(s => new
+                    {
+                        Source = s.Parent?.Name.LocalName,
+                        Id = s.Element("id")?.Value,
+                        Type = s.Element("type")?.Value,
+                        Name = s.Element("name")?.Value,
+                        Value = s.Element("value")?.Value
+                    }).ToList();
+
+                    var variables = root?.Element("variable")?.Elements()
+                        .ToDictionary(e => e.Name.LocalName, e => e.Value);
+
+                    var minMaxValues = root?.Element("minmax")?.Elements("s").Select(s => new
+                    {
+                        SensorId = s.Attribute("id")?.Value,
+                        Min = s.Attribute("min")?.Value,
+                        Max = s.Attribute("max")?.Value
+                    }).ToList();
+
+                    var finalData = new
+                    {
+                        Station = stationInfo,
+                        Sensors = sensors,
+                        Variables = variables,
+                        Extremes = minMaxValues
+                    };
+
+                    string jsonResult = JsonSerializer.Serialize(finalData);
 
                     log.IsAvailable = true;
                     log.Data = jsonResult;
