@@ -8,6 +8,7 @@ Worker Service v .NET 8, která v pravidelných intervalech (1h) stahuje XML dat
 
 - .NET 8 SDK
 - Entity Framework Core
+- LINQ to XML
 - Serilog (Sinks FIle)
 
 ## Jak spustit

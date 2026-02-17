@@ -24,7 +24,7 @@ try
 }
 catch (Exception e)
 {
-    Log.Fatal(e, "Aplikace neo?ekávan? spadla!");
+    Log.Fatal(e, "App has stopped working");
 }
 finally
 {
